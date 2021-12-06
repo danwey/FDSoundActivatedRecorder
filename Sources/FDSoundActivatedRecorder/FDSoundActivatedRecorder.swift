@@ -150,15 +150,19 @@ open class FDSoundActivatedRecorder: NSObject, AVAudioRecorderDelegate {
         audioRecorder.stop()
         audioRecorder.record(forDuration: timeoutSeconds)
         intervalTimer.invalidate()
-        intervalTimer = Timer.scheduledTimer(withTimeInterval: intervalSeconds, repeats: true, block: { (Timer) in
-            guard self.audioRecorder.isRecording else {
-                // Timed out
-                self.abort()
-                return
-            }
-            self.audioRecorder.updateMeters()
-            self.interval(currentLevel: self.audioRecorder.averagePower(forChannel: 0))
-        })
+        if #available(iOS 10.0, *) {
+            intervalTimer = Timer.scheduledTimer(withTimeInterval: intervalSeconds, repeats: true, block: { (Timer) in
+                guard self.audioRecorder.isRecording else {
+                    // Timed out
+                    self.abort()
+                    return
+                }
+                self.audioRecorder.updateMeters()
+                self.interval(currentLevel: self.audioRecorder.averagePower(forChannel: 0))
+            })
+        } else {
+            // Fallback on earlier versions
+        }
         averagingIntervals.removeAll()
         triggerCount = 0
         triggerLevel = nil
